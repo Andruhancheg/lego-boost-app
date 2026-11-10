@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGO BOOST Web Controller</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            padding: 20px;
+        }
+        h1 { color: #d32f2f; }
+        button {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 10px auto;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #ff9800;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        button:active { background-color: #f57c00; }
+        #status {
+            margin: 20px 0;
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>LEGO BOOST Android</h1>
+    <div id="status">Статус: Отключено</div>
+
+    <button id="connectBtn">Подключить LEGO Boost</button>
+    <button id="ledBtn" disabled>Включить подсветку (Зеленый)</button>
+    <button id="motorBtn" disabled>Крутить мотор А</button>
+    <button id="stopBtn" disabled>Стоп</button>
+
+    <!-- Подключаем логику -->
+    <script src="app.js"></script>
+</body>
+</html>
