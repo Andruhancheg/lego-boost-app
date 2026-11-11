@@ -10,15 +10,42 @@
             text-align: center;
             background-color: #f4f4f9;
             padding: 15px;
-            margin-top: 60px; /* Отступ сверху для фиксированной кнопки */
+            margin-top: 70px; /* Отступ сверху для фиксированных кнопок */
         }
-        h1 { color: #d32f2f; font-size: 24px; }
+        h1 { color: #d32f2f; font-size: 22px; }
         
-        /* Квадратная кнопка Bluetooth в правом верхнем углу */
-        #connectBtn {
+        /* Верхняя панель управления (Кнопка STOP слева, Bluetooth справа) */
+        .top-bar {
             position: fixed;
             top: 15px;
+            left: 15px;
             right: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        /* Кнопка STOP (Восьмиугольник / Красный знак стоп) */
+        #stopAllBtn {
+            width: 65px;
+            height: 50px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #stopAllBtn:active { background-color: #b71c1c; }
+
+        /* Квадратная кнопка Bluetooth в правом верхнем углу */
+        #connectBtn {
             width: 50px;
             height: 50px;
             background-color: #ff9800; /* Оранжевый по умолчанию (отключено) */
@@ -29,7 +56,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
             transition: background-color 0.3s;
         }
         #connectBtn svg {
@@ -38,7 +64,6 @@
             fill: white;
         }
         
-        /* Анимация мигания синим при поиске/подключении */
         @keyframes pulseBlue {
             0% { background-color: #2196F3; opacity: 1; }
             50% { background-color: #90CAF9; opacity: 0.6; }
@@ -67,22 +92,53 @@
         button.action-btn:active { background-color: #f57c00; }
         
         #status {
-            margin: 15px 0;
+            margin: 10px 0;
             font-weight: bold;
             color: #555;
+            font-size: 13px;
+        }
+
+        /* Окно монитора датчика расстояния */
+        #sensorMonitor {
+            width: 100%;
+            max-width: 320px;
+            height: 130px;
+            background-color: #1e1e1e;
+            color: #00ff66;
+            font-family: monospace;
             font-size: 14px;
+            border-radius: 8px;
+            margin: 15px auto;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            text-align: left;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Анимация мигания для надписи empty */
+        @keyframes blinkOnce {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+        .empty-blink {
+            color: #ff5252;
+            animation: blinkOnce 0.6s ease-in-out;
         }
     </style>
 </head>
 <body>
 
-    <!-- Квадратная кнопка Bluetooth в правом верхнем углу -->
-    <button id="connectBtn" title="Подключить / Отключить LEGO Boost">
-        <!-- SVG иконка Bluetooth -->
-        <svg viewBox="0 0 24 24">
-            <path d="M17.71,7.71L12,2h-1v7.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L11,14.41V22h1l5.71-5.71l-4.3-4.29L17.71,7.71z M13,5.83l1.88,1.88L13,9.58V5.83z M14.88,16.29L13,18.17v-3.75L14.88,16.29z"/>
-        </svg>
-    </button>
+    <!-- Верхняя панель: Кнопка STOP слева, Bluetooth справа -->
+    <div class="top-bar">
+        <button id="stopAllBtn" title="Экстренный стоп">STOP</button>
+        <button id="connectBtn" title="Подключить / Отключить LEGO Boost">
+            <svg viewBox="0 0 24 24">
+                <path d="M17.71,7.71L12,2h-1v7.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L11,14.41V22h1l5.71-5.71l-4.3-4.29L17.71,7.71z M13,5.83l1.88,1.88L13,9.58V5.83z M14.88,16.29L13,18.17v-3.75L14.88,16.29z"/>
+            </svg>
+        </button>
+    </div>
 
     <h1>LEGO BOOST Controller</h1>
     <div id="status">Статус: Отключено</div>
@@ -91,8 +147,10 @@
     <button id="motorABtn" class="action-btn" disabled>Мотор A (Встроенный)</button>
     <button id="motorBBtn" class="action-btn" disabled>Мотор B (Встроенный)</button>
     <button id="externalMotorBtn" class="action-btn" disabled>Внешний мотор (Порт C)</button>
-    <button id="sensorBtn" class="action-btn" disabled>Запрос датчика (Порт D)</button>
-    <button id="stopBtn" class="action-btn" disabled>Стоп все моторы</button>
+    <button id="sensorBtn" class="action-btn" disabled>Включить опрос датчика</button>
+
+    <!-- Монитор данных датчика -->
+    <div id="sensorMonitor">Монитор датчика расстояния...</div>
 
     <script src="app.js"></script>
 </body>
