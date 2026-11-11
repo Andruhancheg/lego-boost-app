@@ -15,7 +15,6 @@ connectBtn.addEventListener('click', async () => {
     try {
         statusDiv.innerText = "Поиск хаба LEGO...";
         
-        // Ищем только устройства с префиксом LPF2 (настоящий Move Hub)
         bluetoothDevice = await navigator.bluetooth.requestDevice({
             filters: [
                 { namePrefix: 'LPF2' },
@@ -27,9 +26,23 @@ connectBtn.addEventListener('click', async () => {
         statusDiv.innerText = `Подключение к ${bluetoothDevice.name}...`;
         
         const server = await bluetoothDevice.gatt.connect();
-        const service = await server.getPrimaryService(LEGO_SERVICE_UUID);
-        controlCharacteristic = await service.getCharacteristic(LEGO_CHARACTERISTIC_UUID);
+        
+        // Получаем все службы устройства и ищем нужную безошибочно
+        const services = await server.getPrimaryServices();
+        let legoService = null;
+        
+        for (let service of services) {
+            if (service.uuid.toLowerCase() === LEGO_SERVICE_UUID.toLowerCase()) {
+                legoService = service;
+                break;
+            }
+        }
+        
+        if (!legoService) {
+            throw new Error("Служба LEGO не найдена на устройстве!");
+        }
 
+        controlCharacteristic = await legoService.getCharacteristic(LEGO_CHARACTERISTIC_UUID);
         await controlCharacteristic.startNotifications();
         
         statusDiv.innerText = "Статус: Подключено! ✅";
@@ -44,7 +57,7 @@ connectBtn.addEventListener('click', async () => {
 
     } catch (error) {
         console.error(error);
-        statusDiv.innerText = "Ошибка подключения: " + error;
+        statusDiv.innerText = "Ошибка подключения: " + error.message;
         statusDiv.style.color = "red";
     }
 });
