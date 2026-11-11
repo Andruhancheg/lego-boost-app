@@ -23,11 +23,15 @@ connectBtn.addEventListener('click', async () => {
             optionalServices: [LEGO_SERVICE_UUID]
         });
 
+        // Дополнительная защита: проверяем, что устройство действительно имеет корректное имя
+        if (!bluetoothDevice.name || (!bluetoothDevice.name.includes('LPF2') && !bluetoothDevice.name.includes('Move Hub'))) {
+            throw new Error("Выбрано недопустимое устройство (возможно, фантомный адрес из нулей). Выберите настоящий хаб LEGO!");
+        }
+
         statusDiv.innerText = `Подключение к ${bluetoothDevice.name}...`;
         
         const server = await bluetoothDevice.gatt.connect();
         
-        // Получаем все службы устройства и ищем нужную безошибочно
         const services = await server.getPrimaryServices();
         let legoService = null;
         
@@ -57,7 +61,7 @@ connectBtn.addEventListener('click', async () => {
 
     } catch (error) {
         console.error(error);
-        statusDiv.innerText = "Ошибка подключения: " + error.message;
+        statusDiv.innerText = "Ошибка: " + error.message;
         statusDiv.style.color = "red";
     }
 });
