@@ -13,19 +13,15 @@ const stopBtn = document.getElementById('stopBtn');
 
 connectBtn.addEventListener('click', async () => {
     try {
-        statusDiv.innerText = "Поиск устройств...";
+        statusDiv.innerText = "Поиск всех устройств...";
         
-        // Запрос Bluetooth-устройства с точным фильтром по сервису LEGO
+        // Запрос вообще любых устройств без фильтрации по имени
         bluetoothDevice = await navigator.bluetooth.requestDevice({
-            filters: [
-                { services: [LEGO_SERVICE_UUID] },
-                { namePrefix: 'LPF2' },
-                { namePrefix: 'Move Hub' }
-            ],
-            optionalServices: [LEGO_SERVICE_UUID]
+            acceptAllDevices: true,
+            optionalServices: [LEGO_SERVICE_UUID] // Обязательно указываем службу LEGO, чтобы получить к ней доступ
         });
 
-        statusDiv.innerText = `Подключение к ${bluetoothDevice.name}...`;
+        statusDiv.innerText = `Подключение к ${bluetoothDevice.name || "устройству"}...`;
         
         const server = await bluetoothDevice.gatt.connect();
         const service = await server.getPrimaryService(LEGO_SERVICE_UUID);
