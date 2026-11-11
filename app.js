@@ -26,9 +26,15 @@ connectBtn.addEventListener('click', async () => {
             optionalServices: [LEGO_SERVICE_UUID]
         });
 
+        if (!bluetoothDevice.name || (!bluetoothDevice.name.includes('LPF2') && !bluetoothDevice.name.includes('Move Hub'))) {
+            throw new Error("Выбрано недопустимое устройство. Выберите настоящий хаб LEGO!");
+        }
+
         statusDiv.innerText = `Подключение к ${bluetoothDevice.name}...`;
         
         const server = await bluetoothDevice.gatt.connect();
+        
+        // ВЕРНУЛИ ЗАДЕРЖКУ: пауза 1 секунда для стабилизации соединения и опроса служб хаба
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         const service = await server.getPrimaryService(LEGO_SERVICE_UUID);
@@ -36,16 +42,15 @@ connectBtn.addEventListener('click', async () => {
 
         await controlCharacteristic.startNotifications();
         
-        // Подписываемся на входящие данные (датчики)
         controlCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
 
         statusDiv.innerText = "Статус: Подключено! ✅";
         statusDiv.style.color = "green";
 
         connectBtn.disabled = true;
-        setButtonsEnabled(false, false); // Активируем остальные кнопки
+        setButtonsEnabled(false);
 
-        // ЗАЩИТА ОТ ОБРЫВА: отправляем пустой пакет / запрос каждые 3 секунды, чтобы хаб не спал
+        // Защита от обрыва соединения (пингуем хаб каждые 3 секунды)
         keepAliveInterval = setInterval(() => {
             sendCommand([0x05, 0x00, 0x02, 0x00]); 
         }, 3000);
