@@ -10,9 +10,45 @@
             text-align: center;
             background-color: #f4f4f9;
             padding: 15px;
+            margin-top: 60px; /* Отступ сверху для фиксированной кнопки */
         }
         h1 { color: #d32f2f; font-size: 24px; }
-        button {
+        
+        /* Квадратная кнопка Bluetooth в правом верхнем углу */
+        #connectBtn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 50px;
+            height: 50px;
+            background-color: #ff9800; /* Оранжевый по умолчанию (отключено) */
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: background-color 0.3s;
+        }
+        #connectBtn svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+        
+        /* Анимация мигания синим при поиске/подключении */
+        @keyframes pulseBlue {
+            0% { background-color: #2196F3; opacity: 1; }
+            50% { background-color: #90CAF9; opacity: 0.6; }
+            100% { background-color: #2196F3; opacity: 1; }
+        }
+        .connecting {
+            animation: pulseBlue 1.2s infinite;
+        }
+
+        button.action-btn {
             display: block;
             width: 100%;
             max-width: 320px;
@@ -27,8 +63,9 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             cursor: pointer;
         }
-        button:disabled { background-color: #ccc; }
-        button:active { background-color: #f57c00; }
+        button.action-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        button.action-btn:active { background-color: #f57c00; }
+        
         #status {
             margin: 15px 0;
             font-weight: bold;
@@ -39,16 +76,23 @@
 </head>
 <body>
 
+    <!-- Квадратная кнопка Bluetooth в правом верхнем углу -->
+    <button id="connectBtn" title="Подключить / Отключить LEGO Boost">
+        <!-- SVG иконка Bluetooth -->
+        <svg viewBox="0 0 24 24">
+            <path d="M17.71,7.71L12,2h-1v7.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L11,14.41V22h1l5.71-5.71l-4.3-4.29L17.71,7.71z M13,5.83l1.88,1.88L13,9.58V5.83z M14.88,16.29L13,18.17v-3.75L14.88,16.29z"/>
+        </svg>
+    </button>
+
     <h1>LEGO BOOST Controller</h1>
     <div id="status">Статус: Отключено</div>
 
-    <button id="connectBtn">Подключить LEGO Boost</button>
-    <button id="ledBtn">Подсветка (Зеленый)</button>
-    <button id="motorABtn">Мотор A (Встроенный)</button>
-    <button id="motorBBtn">Мотор B (Встроенный)</button>
-    <button id="externalMotorBtn">Внешний мотор (Порт C)</button>
-    <button id="sensorBtn">Запрос датчика (Порт D)</button>
-    <button id="stopBtn">Стоп все моторы</button>
+    <button id="ledBtn" class="action-btn" disabled>Подсветка (Зеленый)</button>
+    <button id="motorABtn" class="action-btn" disabled>Мотор A (Встроенный)</button>
+    <button id="motorBBtn" class="action-btn" disabled>Мотор B (Встроенный)</button>
+    <button id="externalMotorBtn" class="action-btn" disabled>Внешний мотор (Порт C)</button>
+    <button id="sensorBtn" class="action-btn" disabled>Запрос датчика (Порт D)</button>
+    <button id="stopBtn" class="action-btn" disabled>Стоп все моторы</button>
 
     <script src="app.js"></script>
 </body>
