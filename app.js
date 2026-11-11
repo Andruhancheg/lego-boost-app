@@ -3,7 +3,6 @@ let controlCharacteristic = null;
 let keepAliveInterval = null;
 
 const LEGO_SERVICE_UUID = '00001623-1212-efde-1623-785feabcd123';
-const LEGO_CHARACTERISTIC_UUID = '00001524-1212-efde-1623-785feabcd123';
 
 const statusDiv = document.getElementById('status');
 const connectBtn = document.getElementById('connectBtn');
@@ -34,23 +33,39 @@ connectBtn.addEventListener('click', async () => {
         
         const server = await bluetoothDevice.gatt.connect();
         
-        // Пауза 1 секунда для стабилизации соединения и опроса служб хаба
+        // Пауза 1 секунда для стабилизации соединения
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         const service = await server.getPrimaryService(LEGO_SERVICE_UUID);
-        controlCharacteristic = await service.getCharacteristic(LEGO_CHARACTERISTIC_UUID);
-
-        await controlCharacteristic.startNotifications();
         
-        controlCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+        // Автоматический поиск характеристики с поддержкой записи
+        const characteristics = await service.getCharacteristics();
+        for (let characteristic of characteristics) {
+            if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+                controlCharacteristic = characteristic;
+                console.Hog = "Найдена характеристика для записи: " + characteristic.uuid;
+                break;
+            }
+        }
 
+        if (!controlCharacteristic) {
+            throw new Error("Не удалось найти рабочий канал связи с хабом!");
+        }
+
+        try {
+            await controlCharacteristic.startNotifications();
+            controlCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+        } catch (e) {
+            console.log("Уведомления не поддерживаются этой характеристикой, но запись доступна.");
+        }
+        
         statusDiv.innerText = "Статус: Подключено! ✅";
         statusDiv.style.color = "green";
 
         connectBtn.disabled = true;
         setButtonsEnabled(false);
 
-        // Защита от обрыва соединения (пингуем хаб каждые 3 секунды)
+        // Пинг для предотвращения разрыва соединения
         keepAliveInterval = setInterval(() => {
             sendCommand([0x05, 0x00, 0x02, 0x00]); 
         }, 3000);
@@ -91,44 +106,33 @@ async function sendCommand(bytes) {
     }
 }
 
-// Обработка данных от датчиков (расстояние и цвет)
 function handleNotifications(event) {
     const value = event.target.value;
-    console.log("Получены данные от хаба:", new Uint8Array(value.buffer));
+    console.log("Данные от хаба:", new Uint8Array(value.buffer));
 }
 
-// 1. Включить подсветку хаба (Зеленый цвет)
+// Управление
 ledBtn.addEventListener('click', () => {
-    const cmd = [0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x03];
-    sendCommand(cmd);
+    sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x03]);
 });
 
-// 2. Мотор А (Встроенный мотор на Move Hub)
 motorABtn.addEventListener('click', () => {
-    const cmd = [0x08, 0x00, 0x81, 0x00, 0x11, 0x51, 0x00, 50];
-    sendCommand(cmd);
+    sendCommand([0x08, 0x00, 0x81, 0x00, 0x11, 0x51, 0x00, 50]);
 });
 
-// 3. Мотор B (Встроенный мотор на Move Hub)
 motorBBtn.addEventListener('click', () => {
-    const cmd = [0x08, 0x00, 0x81, 0x01, 0x11, 0x51, 0x00, 50];
-    sendCommand(cmd);
+    sendCommand([0x08, 0x00, 0x81, 0x01, 0x11, 0x51, 0x00, 50]);
 });
 
-// 4. Внешний мотор (Порт C)
 externalMotorBtn.addEventListener('click', () => {
-    const cmd = [0x08, 0x00, 0x81, 0x02, 0x11, 0x51, 0x00, 60];
-    sendCommand(cmd);
+    sendCommand([0x08, 0x00, 0x81, 0x02, 0x11, 0x51, 0x00, 60]);
 });
 
-// 5. Запрос данных с датчика цвета и расстояния (Порт D)
 sensorBtn.addEventListener('click', () => {
-    const cmd = [0x0A, 0x00, 0x41, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01];
-    sendCommand(cmd);
-    statusDiv.innerText = "Датчик опрошен. Смотрите данные в консоли!";
+    sendCommand([0x0A, 0x00, 0x41, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01]);
+    statusDiv.innerText = "Датчик опрошен!";
 });
 
-// 6. Стоп всех моторов
 stopBtn.addEventListener('click', () => {
     sendCommand([0x08, 0x00, 0x81, 0x00, 0x11, 0x51, 0x00, 0]);
     sendCommand([0x08, 0x00, 0x81, 0x01, 0x11, 0x51, 0x00, 0]);
