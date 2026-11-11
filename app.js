@@ -23,30 +23,35 @@ connectBtn.addEventListener('click', async () => {
             optionalServices: [LEGO_SERVICE_UUID]
         });
 
-        // Дополнительная защита: проверяем, что устройство действительно имеет корректное имя
         if (!bluetoothDevice.name || (!bluetoothDevice.name.includes('LPF2') && !bluetoothDevice.name.includes('Move Hub'))) {
-            throw new Error("Выбрано недопустимое устройство (возможно, фантомный адрес из нулей). Выберите настоящий хаб LEGO!");
+            throw new Error("Выбрано недопустимое устройство. Выберите настоящий хаб LEGO!");
         }
 
         statusDiv.innerText = `Подключение к ${bluetoothDevice.name}...`;
         
         const server = await bluetoothDevice.gatt.connect();
         
-        const services = await server.getPrimaryServices();
-        let legoService = null;
+        // Пауза 1 секунда для стабилизации соединения и опроса служб хаба
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const service = await server.getPrimaryService(LEGO_SERVICE_UUID);
         
-        for (let service of services) {
-            if (service.uuid.toLowerCase() === LEGO_SERVICE_UUID.toLowerCase()) {
-                legoService = service;
+        // Получаем все характеристики службы и ищем ту, в которую можно писать команды
+        const characteristics = await service.getCharacteristics();
+        
+        for (let characteristic of characteristics) {
+            // Ищем характеристику с поддержкой записи (write или writeWithoutResponse)
+            if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+                controlCharacteristic = characteristic;
                 break;
             }
         }
-        
-        if (!legoService) {
-            throw new Error("Служба LEGO не найдена на устройстве!");
+
+        if (!controlCharacteristic) {
+            // Если автоматический поиск не нашел, принудительно берем 1524
+            controlCharacteristic = await service.getCharacteristic(LEGO_CHARACTERISTIC_UUID);
         }
 
-        controlCharacteristic = await legoService.getCharacteristic(LEGO_CHARACTERISTIC_UUID);
         await controlCharacteristic.startNotifications();
         
         statusDiv.innerText = "Статус: Подключено! ✅";
