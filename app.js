@@ -15,10 +15,9 @@ connectBtn.addEventListener('click', async () => {
     try {
         statusDiv.innerText = "Поиск устройств...";
         
-        // Запрос Bluetooth-устройства с мягким фильтром по имени
+        // Запрос Bluetooth-устройства (фильтруем по имени или сервису)
         bluetoothDevice = await navigator.bluetooth.requestDevice({
-            filters: [{ namePrefix: 'LPF2' }],
-            optionalServices: [LEGO_SERVICE_UUID]
+            filters: [{ namePrefix: 'LPF2' }, { services: [LEGO_SERVICE_UUID] }]
         });
 
         statusDiv.innerText = `Подключение к ${bluetoothDevice.name}...`;
@@ -27,11 +26,13 @@ connectBtn.addEventListener('click', async () => {
         const service = await server.getPrimaryService(LEGO_SERVICE_UUID);
         controlCharacteristic = await service.getCharacteristic(LEGO_CHARACTERISTIC_UUID);
 
+        // Подписываемся на уведомления от хаба (сенсоры, кнопка питания)
         await controlCharacteristic.startNotifications();
         
         statusDiv.innerText = "Статус: Подключено! ✅";
         statusDiv.style.color = "green";
 
+        // Активируем кнопки интерфейса
         connectBtn.disabled = true;
         ledBtn.disabled = false;
         motorBtn.disabled = false;
