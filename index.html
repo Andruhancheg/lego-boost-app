@@ -10,11 +10,11 @@
             text-align: center;
             background-color: #f4f4f9;
             padding: 15px;
-            margin-top: 70px; /* Отступ сверху для фиксированных кнопок */
+            margin-top: 75px; /* Отступ сверху для фиксированных кнопок */
         }
         h1 { color: #d32f2f; font-size: 22px; }
         
-        /* Верхняя панель управления (Кнопка STOP слева, Bluetooth справа) */
+        /* Верхняя панель управления */
         .top-bar {
             position: fixed;
             top: 15px;
@@ -26,29 +26,30 @@
             z-index: 1000;
         }
 
-        /* Кнопка STOP (Восьмиугольник / Красный знак стоп) */
+        /* Кнопка STOP в виде точного дорожного знака (восьмиугольник) */
         #stopAllBtn {
-            width: 65px;
-            height: 50px;
+            width: 58px;
+            height: 58px;
             background-color: #d32f2f;
             color: white;
             border: none;
-            border-radius: 8px;
             font-weight: bold;
-            font-size: 14px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            font-size: 13px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+            transition: transform 0.1s;
         }
-        #stopAllBtn:active { background-color: #b71c1c; }
+        #stopAllBtn:active { transform: scale(0.95); background-color: #b71c1c; }
 
         /* Квадратная кнопка Bluetooth в правом верхнем углу */
         #connectBtn {
             width: 50px;
             height: 50px;
-            background-color: #ff9800; /* Оранжевый по умолчанию (отключено) */
+            background-color: #ff9800;
             border: none;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
@@ -98,17 +99,38 @@
             font-size: 13px;
         }
 
+        /* Панель с 8 цветными кирпичиками на ширину экрана */
+        .color-palette {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 320px;
+            margin: 12px auto;
+            gap: 4px;
+        }
+        .brick-btn {
+            flex: 1;
+            height: 38px;
+            border: 2px solid rgba(0,0,0,0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.15);
+            transition: transform 0.1s;
+        }
+        .brick-btn:active { transform: scale(0.9); }
+        .brick-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
         /* Окно монитора датчика расстояния */
         #sensorMonitor {
             width: 100%;
             max-width: 320px;
-            height: 130px;
+            height: 110px;
             background-color: #1e1e1e;
             color: #00ff66;
             font-family: monospace;
             font-size: 14px;
             border-radius: 8px;
-            margin: 15px auto;
+            margin: 10px auto;
             padding: 10px;
             box-sizing: border-box;
             overflow-y: auto;
@@ -116,7 +138,6 @@
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
         }
 
-        /* Анимация мигания для надписи empty */
         @keyframes blinkOnce {
             0% { opacity: 0.2; }
             50% { opacity: 1; }
@@ -130,7 +151,7 @@
 </head>
 <body>
 
-    <!-- Верхняя панель: Кнопка STOP слева, Bluetooth справа -->
+    <!-- Верхняя панель: Восьмиугольный STOP слева, BT справа -->
     <div class="top-bar">
         <button id="stopAllBtn" title="Экстренный стоп">STOP</button>
         <button id="connectBtn" title="Подключить / Отключить LEGO Boost">
@@ -143,7 +164,18 @@
     <h1>LEGO BOOST Controller</h1>
     <div id="status">Статус: Отключено</div>
 
-    <button id="ledBtn" class="action-btn" disabled>Подсветка (Зеленый)</button>
+    <!-- Панель из 8 базовых цветных кирпичиков -->
+    <div class="color-palette">
+        <button class="brick-btn" id="brickRed" style="background-color: #e53935;" title="Красный"></button>
+        <button class="brick-btn" id="brickGreen" style="background-color: #43a047;" title="Зеленый"></button>
+        <button class="brick-btn" id="brickBlue" style="background-color: #1e88e5;" title="Синий"></button>
+        <button class="brick-btn" id="brickCyan" style="background-color: #00acc1;" title="Голубой"></button>
+        <button class="brick-btn" id="brickYellow" style="background-color: #fbc02d;" title="Желтый"></button>
+        <button class="brick-btn" id="brickOrange" style="background-color: #fb8c00;" title="Оранжевый"></button>
+        <button class="brick-btn" id="brickPurple" style="background-color: #8e24aa;" title="Фиолетовый"></button>
+        <button class="brick-btn" id="brickWhite" style="background-color: #f5f5f5;" title="Белый"></button>
+    </div>
+
     <button id="motorABtn" class="action-btn" disabled>Мотор A (Встроенный)</button>
     <button id="motorBBtn" class="action-btn" disabled>Мотор B (Встроенный)</button>
     <button id="externalMotorBtn" class="action-btn" disabled>Внешний мотор (Порт C)</button>
