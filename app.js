@@ -15,7 +15,6 @@ const externalMotorBtn = document.getElementById('externalMotorBtn');
 const sensorBtn = document.getElementById('sensorBtn');
 const sensorMonitor = document.getElementById('sensorMonitor');
 
-// Элементы 8 цветных кирпичиков
 const bricks = {
     red: document.getElementById('brickRed'),
     green: document.getElementById('brickGreen'),
@@ -27,7 +26,6 @@ const bricks = {
     white: document.getElementById('brickWhite')
 };
 
-// Подключение / отключение по кнопке BT
 connectBtn.addEventListener('click', async () => {
     if (bluetoothDevice && bluetoothDevice.gatt.connected) {
         bluetoothDevice.gatt.disconnect();
@@ -82,11 +80,10 @@ connectBtn.addEventListener('click', async () => {
         statusDiv.style.color = "green";
         
         connectBtn.classList.remove('connecting');
-        connectBtn.style.backgroundColor = "#81C784"; // Бледно-зеленый
+        connectBtn.style.backgroundColor = "#81C784";
 
         setButtonsEnabled(false);
 
-        // Пинг для поддержания соединения
         keepAliveInterval = setInterval(() => {
             sendCommand([0x05, 0x00, 0x02, 0x00]); 
         }, 3000);
@@ -106,7 +103,7 @@ function onDisconnected() {
     statusDiv.style.color = "#555";
     
     connectBtn.classList.remove('connecting');
-    connectBtn.style.backgroundColor = "#ff9800"; // Оранжевый
+    connectBtn.style.backgroundColor = "#ff9800";
 
     setButtonsEnabled(true);
     if (keepAliveInterval) clearInterval(keepAliveInterval);
@@ -122,7 +119,6 @@ function setButtonsEnabled(disabledState) {
     sensorBtn.disabled = disabledState;
     stopAllBtn.disabled = disabledState;
     
-    // Блокировка/разблокировка 8 кирпичиков палитры
     Object.values(bricks).forEach(btn => btn.disabled = disabledState);
 }
 
@@ -136,7 +132,6 @@ async function sendCommand(bytes) {
     }
 }
 
-// Обработка данных от датчиков
 function handleNotifications(event) {
     const value = event.target.value;
     const data = new Uint8Array(value.buffer);
@@ -175,15 +170,12 @@ function addMonitorLine(text, isBlink) {
     
     sensorMonitor.insertBefore(div, sensorMonitor.firstChild);
     
-    if (sensorMonitor.children.length > 20) {
+    if (sensorMonitor.children.length > 30) {
         sensorMonitor.removeChild(sensorMonitor.lastChild);
     }
 }
 
-// --- Управление 8 базовыми цветами хаба LEGO Move Hub ---
-// Коды цветов палитры LEGO:
-// Красный - 9, Зеленый - 5, Синий - 3, Голубой - 4, Желтый - 7, Оранжевый - 8, Фиолетовый - 2, Белый - 10
-
+// Управление цветами через кирпичики
 bricks.red.addEventListener('click',    () => sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x09]));
 bricks.green.addEventListener('click',  () => sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x05]));
 bricks.blue.addEventListener('click',   () => sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x03]));
@@ -220,10 +212,27 @@ sensorBtn.addEventListener('click', () => {
     }, 500);
 });
 
-// Восьмиугольная кнопка STOP
+// Кнопка STOP (ИСПРАВЛЕНО: останавливает моторы A, B, C и выключает фоновый опрос датчика, не трогая BT)
 stopAllBtn.addEventListener('click', () => {
-    sendCommand([0x08, 0x00, 0x81, 0x00, 0x11, 0x51, 0x00, 0]); // Мотор A стоп
-    sendCommand([0x08, 0x00, 0x81, 0x01, 0x11, 0x51, 0x00, 0]); // Мотор B стоп
-    sendCommand([0x08, 0x00, 0x81, 0x02, 0x11, 0x51, 0x00, 0]); // Внешний мотор стоп
-    sensorMonitor.insertBefore(document.createTextNode("--- ВСЕ МОТОРЫ ОСТАНОВЛЕНЫ --- \n"), sensorMonitor.firstChild);
+    // 1. Останавливаем мотор A (порт 0x00)
+    sendCommand([0x08, 0x00, 0x81, 0x00, 0x11, 0x51, 0x00, 0]);
+    // 2. Останавливаем мотор B (порт 0x01)
+    sendCommand([0x08, 0x00, 0x81, 0x01, 0x11, 0x51, 0x00, 0]);
+    // 3. Останавливаем внешний мотор (порт 0x02)
+    sendCommand([0x08, 0x00, 0x81, 0x02, 0x11, 0x51, 0x00, 0]);
+    
+    // 4. Останавливаем фоновый таймер опроса датчика
+    if (sensorInterval) {
+        clearInterval(sensorInterval);
+        sensorInterval = null;
+    }
+    
+    // 5. Выключаем подсветку хаба (цвет 0 - выкл)
+    sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x00]);
+
+    // Запись в увеличенный монитор
+    const div = document.createElement('div');
+    div.style.color = "#ff5252";
+    div.innerText = "--- ВСЕ ПРОЦЕССЫ ОСТАНОВЛЕНЫ ---";
+    sensorMonitor.insertBefore(div, sensorMonitor.firstChild);
 });
