@@ -34,26 +34,36 @@ connectBtn.addEventListener('click', async () => {
         
         const server = await bluetoothDevice.gatt.connect();
         
-        // ВЕРНУЛИ ЗАДЕРЖКУ: пауза 1 секунда для стабилизации соединения и опроса служб хаба
+        // Пауза 1 секунда для стабилизации соединения и опроса служб хаба
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         const service = await server.getPrimaryService(LEGO_SERVICE_UUID);
-        controlCharacteristic = await service.getCharacteristic(LEGO_CHARACTERISTIC_UUID);
+        
+        // Получаем все характеристики службы и ищем ту, в которую можно писать команды
+        const characteristics = await service.getCharacteristics();
+        
+        for (let characteristic of characteristics) {
+            // Ищем характеристику с поддержкой записи (write или writeWithoutResponse)
+            if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+                controlCharacteristic = characteristic;
+                break;
+            }
+        }
+
+        if (!controlCharacteristic) {
+            // Если автоматический поиск не нашел, принудительно берем 1524
+            controlCharacteristic = await service.getCharacteristic(LEGO_CHARACTERISTIC_UUID);
+        }
 
         await controlCharacteristic.startNotifications();
         
-        controlCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
-
         statusDiv.innerText = "Статус: Подключено! ✅";
         statusDiv.style.color = "green";
 
         connectBtn.disabled = true;
-        setButtonsEnabled(false);
-
-        // Защита от обрыва соединения (пингуем хаб каждые 3 секунды)
-        keepAliveInterval = setInterval(() => {
-            sendCommand([0x05, 0x00, 0x02, 0x00]); 
-        }, 3000);
+        ledBtn.disabled = false;
+        motorBtn.disabled = false;
+        stopBtn.disabled = false;
 
         bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
