@@ -1,9 +1,9 @@
 let bluetoothDevice = null;
 let controlCharacteristic = null;
 
-// UUID службы LEGO Wireless Protocol v3 для Move Hub
+// UUID службы и характеристики LEGO Move Hub
 const LEGO_SERVICE_UUID = '00001623-1212-efde-1623-785feabcd123';
-const LEGO_CHARACTERISTIC_UUID = '00001523-1212-efde-1623-785feabcd123';
+const LEGO_CHARACTERISTIC_UUID = '00001524-1212-efde-1623-785feabcd123'; // Исправлено с 1523 на 1524
 
 const statusDiv = document.getElementById('status');
 const connectBtn = document.getElementById('connectBtn');
