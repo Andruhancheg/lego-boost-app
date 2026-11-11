@@ -15,9 +15,13 @@ connectBtn.addEventListener('click', async () => {
     try {
         statusDiv.innerText = "Поиск устройств...";
         
-        // Запрос Bluetooth-устройства с мягким фильтром по имени
+        // Запрос Bluetooth-устройства с точным фильтром по сервису LEGO
         bluetoothDevice = await navigator.bluetooth.requestDevice({
-            filters: [{ namePrefix: 'LPF2' }],
+            filters: [
+                { services: [LEGO_SERVICE_UUID] },
+                { namePrefix: 'LPF2' },
+                { namePrefix: 'Move Hub' }
+            ],
             optionalServices: [LEGO_SERVICE_UUID]
         });
 
