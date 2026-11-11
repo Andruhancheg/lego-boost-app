@@ -2,21 +2,32 @@ let bluetoothDevice = null;
 let controlCharacteristic = null;
 let keepAliveInterval = null;
 let sensorInterval = null;
-let lastWasEmpty = false; // Флаг для отслеживания повторения "empty"
+let lastWasEmpty = false;
 
 const LEGO_SERVICE_UUID = '00001623-1212-efde-1623-785feabcd123';
 
 const statusDiv = document.getElementById('status');
 const connectBtn = document.getElementById('connectBtn');
 const stopAllBtn = document.getElementById('stopAllBtn');
-const ledBtn = document.getElementById('ledBtn');
 const motorABtn = document.getElementById('motorABtn');
 const motorBBtn = document.getElementById('motorBBtn');
 const externalMotorBtn = document.getElementById('externalMotorBtn');
 const sensorBtn = document.getElementById('sensorBtn');
 const sensorMonitor = document.getElementById('sensorMonitor');
 
-// Управление кнопкой Bluetooth (сопряжение / разрыв)
+// Элементы 8 цветных кирпичиков
+const bricks = {
+    red: document.getElementById('brickRed'),
+    green: document.getElementById('brickGreen'),
+    blue: document.getElementById('brickBlue'),
+    cyan: document.getElementById('brickCyan'),
+    yellow: document.getElementById('brickYellow'),
+    orange: document.getElementById('brickOrange'),
+    purple: document.getElementById('brickPurple'),
+    white: document.getElementById('brickWhite')
+};
+
+// Подключение / отключение по кнопке BT
 connectBtn.addEventListener('click', async () => {
     if (bluetoothDevice && bluetoothDevice.gatt.connected) {
         bluetoothDevice.gatt.disconnect();
@@ -105,12 +116,14 @@ function onDisconnected() {
 }
 
 function setButtonsEnabled(disabledState) {
-    ledBtn.disabled = disabledState;
     motorABtn.disabled = disabledState;
     motorBBtn.disabled = disabledState;
     externalMotorBtn.disabled = disabledState;
     sensorBtn.disabled = disabledState;
     stopAllBtn.disabled = disabledState;
+    
+    // Блокировка/разблокировка 8 кирпичиков палитры
+    Object.values(bricks).forEach(btn => btn.disabled = disabledState);
 }
 
 async function sendCommand(bytes) {
@@ -123,39 +136,31 @@ async function sendCommand(bytes) {
     }
 }
 
-// Обработка входящих пакетов от датчиков
+// Обработка данных от датчиков
 function handleNotifications(event) {
     const value = event.target.value;
     const data = new Uint8Array(value.buffer);
     
-    // Проверяем, пришли ли данные от датчика расстояния (порт 3 / 0x03)
-    // В протоколе LEGO Move Hub сырые данные датчика расстояния приходят в конце пакета
     if (data.length >= 5 && data[3] === 0x03) {
-        const distanceValue = data[4]; // Значение расстояния
+        const distanceValue = data[4];
         logDistance(distanceValue);
     }
 }
 
-// Функция вывода данных в монитор с логикой "empty"
 function logDistance(val) {
-    // Если значение датчика равно 255 или 0 (нет объекта / ошибка замера) -> считаем за "empty"
     const isEmpty = (val === 255 || val === 0 || val === undefined);
-    
     const lines = sensorMonitor.getElementsByTagName('div');
     
     if (isEmpty) {
         if (lastWasEmpty) {
-            // Если предыдущая запись тоже была empty — заменяем её и заставляем мигнуть
             if (lines.length > 0) {
                 lines[0].outerHTML = `<div class="empty-blink">empty</div>`;
             }
         } else {
-            // Первая неудачная попытка — добавляем новую строчку "empty"
             addMonitorLine("empty", true);
             lastWasEmpty = true;
         }
     } else {
-        // Успешный замер
         addMonitorLine(`Расстояние: ${val} см`, false);
         lastWasEmpty = false;
     }
@@ -170,37 +175,38 @@ function addMonitorLine(text, isBlink) {
     
     sensorMonitor.insertBefore(div, sensorMonitor.firstChild);
     
-    // Ограничиваем историю до 20 строк, чтобы монитор не переполнялся
     if (sensorMonitor.children.length > 20) {
         sensorMonitor.removeChild(sensorMonitor.lastChild);
     }
 }
 
-// --- Управление устройствами ---
+// --- Управление 8 базовыми цветами хаба LEGO Move Hub ---
+// Коды цветов палитры LEGO:
+// Красный - 9, Зеленый - 5, Синий - 3, Голубой - 4, Желтый - 7, Оранжевый - 8, Фиолетовый - 2, Белый - 10
 
-// 1. Подсветка
-ledBtn.addEventListener('click', () => {
-    sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x03]);
-});
+bricks.red.addEventListener('click',    () => sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x09]));
+bricks.green.addEventListener('click',  () => sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x05]));
+bricks.blue.addEventListener('click',   () => sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x03]));
+bricks.cyan.addEventListener('click',   () => sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x04]));
+bricks.yellow.addEventListener('click', () => sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x07]));
+bricks.orange.addEventListener('click', () => sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x08]));
+bricks.purple.addEventListener('click', () => sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x02]));
+bricks.white.addEventListener('click',  () => sendCommand([0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x0A]));
 
-// 2. Мотор А (Порт 0x00)
+// Моторы и датчики
 motorABtn.addEventListener('click', () => {
     sendCommand([0x08, 0x00, 0x81, 0x00, 0x11, 0x51, 0x00, 50]);
 });
 
-// 3. Мотор B (Порт 0x01)
 motorBBtn.addEventListener('click', () => {
     sendCommand([0x08, 0x00, 0x81, 0x01, 0x11, 0x51, 0x00, 50]);
 });
 
-// 4. Внешний мотор (Порт C / 0x02)
 externalMotorBtn.addEventListener('click', () => {
     sendCommand([0x08, 0x00, 0x81, 0x02, 0x11, 0x51, 0x00, 60]);
 });
 
-// 5. Запуск опроса датчика расстояния (Порт D / 0x03) 2 раза в секунду
 sensorBtn.addEventListener('click', () => {
-    // Команда активации режима датчика цвета и расстояния (режим 0x00 или 0x01)
     const initCmd = [0x0A, 0x00, 0x41, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01];
     sendCommand(initCmd);
     
@@ -208,17 +214,14 @@ sensorBtn.addEventListener('click', () => {
     
     if (sensorInterval) clearInterval(sensorInterval);
     
-    // Опрос каждые 500 мс (2 раза в секунду)
     sensorInterval = setInterval(() => {
-        // Запрос портативного значения (Port Value Read) для порта 3
         const readCmd = [0x05, 0x00, 0x21, 0x03];
         sendCommand(readCmd);
     }, 500);
 });
 
-// 6. Кнопка STOP (Остановка всех трех моторов: A, B и внешнего порта C)
+// Восьмиугольная кнопка STOP
 stopAllBtn.addEventListener('click', () => {
-    // Отправляем нулевую скорость отдельно на каждый порт моторов
     sendCommand([0x08, 0x00, 0x81, 0x00, 0x11, 0x51, 0x00, 0]); // Мотор A стоп
     sendCommand([0x08, 0x00, 0x81, 0x01, 0x11, 0x51, 0x00, 0]); // Мотор B стоп
     sendCommand([0x08, 0x00, 0x81, 0x02, 0x11, 0x51, 0x00, 0]); // Внешний мотор стоп
