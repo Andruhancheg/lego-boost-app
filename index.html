@@ -9,43 +9,47 @@
             font-family: Arial, sans-serif;
             text-align: center;
             background-color: #f4f4f9;
-            padding: 20px;
+            padding: 15px;
         }
-        h1 { color: #d32f2f; }
+        h1 { color: #d32f2f; font-size: 24px; }
         button {
             display: block;
             width: 100%;
-            max-width: 300px;
-            margin: 10px auto;
-            padding: 15px;
-            font-size: 18px;
+            max-width: 320px;
+            margin: 8px auto;
+            padding: 12px;
+            font-size: 16px;
             font-weight: bold;
             color: white;
             background-color: #ff9800;
             border: none;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             cursor: pointer;
         }
+        button:disabled { background-color: #ccc; }
         button:active { background-color: #f57c00; }
         #status {
-            margin: 20px 0;
+            margin: 15px 0;
             font-weight: bold;
             color: #555;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
-    <h1>LEGO BOOST Android</h1>
+    <h1>LEGO BOOST Controller</h1>
     <div id="status">Статус: Отключено</div>
 
     <button id="connectBtn">Подключить LEGO Boost</button>
-    <button id="ledBtn" disabled>Включить подсветку (Зеленый)</button>
-    <button id="motorBtn" disabled>Крутить мотор А</button>
-    <button id="stopBtn" disabled>Стоп</button>
+    <button id="ledBtn" disabled>Подсветка (Зеленый)</button>
+    <button id="motorABtn" disabled>Мотор A (Встроенный)</button>
+    <button id="motorBBtn" disabled>Мотор B (Встроенный)</button>
+    <button id="externalMotorBtn" disabled>Внешний мотор (Порт C)</button>
+    <button id="sensorBtn" disabled>Запрос датчика (Порт D)</button>
+    <button id="stopBtn" disabled>Стоп все моторы</button>
 
-    <!-- Подключаем логику -->
     <script src="app.js"></script>
 </body>
 </html>
