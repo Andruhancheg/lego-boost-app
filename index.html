@@ -10,11 +10,10 @@
             text-align: center;
             background-color: #f4f4f9;
             padding: 15px;
-            margin-top: 75px; /* Отступ сверху для фиксированных кнопок */
+            margin-top: 75px;
         }
         h1 { color: #d32f2f; font-size: 22px; }
         
-        /* Верхняя панель управления */
         .top-bar {
             position: fixed;
             top: 15px;
@@ -26,7 +25,6 @@
             z-index: 1000;
         }
 
-        /* Кнопка STOP в виде точного дорожного знака (восьмиугольник) */
         #stopAllBtn {
             width: 58px;
             height: 58px;
@@ -45,7 +43,6 @@
         }
         #stopAllBtn:active { transform: scale(0.95); background-color: #b71c1c; }
 
-        /* Квадратная кнопка Bluetooth в правом верхнем углу */
         #connectBtn {
             width: 50px;
             height: 50px;
@@ -99,7 +96,6 @@
             font-size: 13px;
         }
 
-        /* Панель с 8 цветными кирпичиками на ширину экрана */
         .color-palette {
             display: flex;
             justify-content: space-between;
@@ -120,11 +116,11 @@
         .brick-btn:active { transform: scale(0.9); }
         .brick-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* Окно монитора датчика расстояния */
+        /* Окно монитора увеличено на 100% (было 110px, стало 220px) */
         #sensorMonitor {
             width: 100%;
             max-width: 320px;
-            height: 110px;
+            height: 220px;
             background-color: #1e1e1e;
             color: #00ff66;
             font-family: monospace;
@@ -151,7 +147,6 @@
 </head>
 <body>
 
-    <!-- Верхняя панель: Восьмиугольный STOP слева, BT справа -->
     <div class="top-bar">
         <button id="stopAllBtn" title="Экстренный стоп">STOP</button>
         <button id="connectBtn" title="Подключить / Отключить LEGO Boost">
@@ -164,7 +159,6 @@
     <h1>LEGO BOOST Controller</h1>
     <div id="status">Статус: Отключено</div>
 
-    <!-- Панель из 8 базовых цветных кирпичиков -->
     <div class="color-palette">
         <button class="brick-btn" id="brickRed" style="background-color: #e53935;" title="Красный"></button>
         <button class="brick-btn" id="brickGreen" style="background-color: #43a047;" title="Зеленый"></button>
@@ -181,7 +175,6 @@
     <button id="externalMotorBtn" class="action-btn" disabled>Внешний мотор (Порт C)</button>
     <button id="sensorBtn" class="action-btn" disabled>Включить опрос датчика</button>
 
-    <!-- Монитор данных датчика -->
     <div id="sensorMonitor">Монитор датчика расстояния...</div>
 
     <script src="app.js"></script>
