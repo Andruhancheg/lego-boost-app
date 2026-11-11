@@ -38,32 +38,22 @@ connectBtn.addEventListener('click', async () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         const service = await server.getPrimaryService(LEGO_SERVICE_UUID);
-        
-        // Получаем все характеристики службы и ищем ту, в которую можно писать команды
-        const characteristics = await service.getCharacteristics();
-        
-        for (let characteristic of characteristics) {
-            // Ищем характеристику с поддержкой записи (write или writeWithoutResponse)
-            if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
-                controlCharacteristic = characteristic;
-                break;
-            }
-        }
-
-        if (!controlCharacteristic) {
-            // Если автоматический поиск не нашел, принудительно берем 1524
-            controlCharacteristic = await service.getCharacteristic(LEGO_CHARACTERISTIC_UUID);
-        }
+        controlCharacteristic = await service.getCharacteristic(LEGO_CHARACTERISTIC_UUID);
 
         await controlCharacteristic.startNotifications();
         
+        controlCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+
         statusDiv.innerText = "Статус: Подключено! ✅";
         statusDiv.style.color = "green";
 
         connectBtn.disabled = true;
-        ledBtn.disabled = false;
-        motorBtn.disabled = false;
-        stopBtn.disabled = false;
+        setButtonsEnabled(false);
+
+        // Защита от обрыва соединения (пингуем хаб каждые 3 секунды)
+        keepAliveInterval = setInterval(() => {
+            sendCommand([0x05, 0x00, 0x02, 0x00]); 
+        }, 3000);
 
         bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
@@ -78,7 +68,7 @@ function onDisconnected() {
     statusDiv.innerText = "Статус: Отключено ❌";
     statusDiv.style.color = "#555";
     connectBtn.disabled = false;
-    setButtonsEnabled(true, true);
+    setButtonsEnabled(true);
     if (keepAliveInterval) clearInterval(keepAliveInterval);
 }
 
@@ -104,41 +94,35 @@ async function sendCommand(bytes) {
 // Обработка данных от датчиков (расстояние и цвет)
 function handleNotifications(event) {
     const value = event.target.value;
-    // Логируем в консоль для отладки
     console.log("Получены данные от хаба:", new Uint8Array(value.buffer));
 }
 
-// 1. Включить подсветку хаба (Зеленый цвет) - ИСПРАВЛЕНО
+// 1. Включить подсветку хаба (Зеленый цвет)
 ledBtn.addEventListener('click', () => {
-    // Порт 0x32 (50) - встроенная подсветка RGB, режим 0x01, значение цвета 0x03 (зеленый)
     const cmd = [0x08, 0x00, 0x81, 0x32, 0x11, 0x51, 0x01, 0x03];
     sendCommand(cmd);
 });
 
 // 2. Мотор А (Встроенный мотор на Move Hub)
 motorABtn.addEventListener('click', () => {
-    // Порт 0x00 (Мотор А) на скорость 50%
     const cmd = [0x08, 0x00, 0x81, 0x00, 0x11, 0x51, 0x00, 50];
     sendCommand(cmd);
 });
 
 // 3. Мотор B (Встроенный мотор на Move Hub)
 motorBBtn.addEventListener('click', () => {
-    // Порт 0x01 (Мотор B) на скорость 50%
     const cmd = [0x08, 0x00, 0x81, 0x01, 0x11, 0x51, 0x00, 50];
     sendCommand(cmd);
 });
 
-// 4. Внешний мотор (обычно подключается к порту C или D)
+// 4. Внешний мотор (Порт C)
 externalMotorBtn.addEventListener('click', () => {
-    // Порт 0x02 (Порт C) на скорость 60%
     const cmd = [0x08, 0x00, 0x81, 0x02, 0x11, 0x51, 0x00, 60];
     sendCommand(cmd);
 });
 
-// 5. Запрос данных с датчика цвета и расстояния (подключается к порту)
+// 5. Запрос данных с датчика цвета и расстояния (Порт D)
 sensorBtn.addEventListener('click', () => {
-    // Порт 0x03 (Порт D) - включение режима измерения расстояния
     const cmd = [0x0A, 0x00, 0x41, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01];
     sendCommand(cmd);
     statusDiv.innerText = "Датчик опрошен. Смотрите данные в консоли!";
