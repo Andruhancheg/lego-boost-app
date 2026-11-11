@@ -13,10 +13,20 @@ const externalMotorBtn = document.getElementById('externalMotorBtn');
 const sensorBtn = document.getElementById('sensorBtn');
 const stopBtn = document.getElementById('stopBtn');
 
+// Единая кнопка сопряжения и разрыва соединения
 connectBtn.addEventListener('click', async () => {
+    // Если уже подключены — разрываем соединение
+    if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+        bluetoothDevice.gatt.disconnect();
+        onDisconnected();
+        return;
+    }
+
     try {
         statusDiv.innerText = "Поиск хаба LEGO...";
-        
+        connectBtn.classList.add('connecting'); // Мигает синим во время поиска
+        connectBtn.style.backgroundColor = "";
+
         bluetoothDevice = await navigator.bluetooth.requestDevice({
             filters: [
                 { namePrefix: 'LPF2' },
@@ -43,7 +53,6 @@ connectBtn.addEventListener('click', async () => {
         for (let characteristic of characteristics) {
             if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
                 controlCharacteristic = characteristic;
-                console.Hog = "Найдена характеристика для записи: " + characteristic.uuid;
                 break;
             }
         }
@@ -56,13 +65,16 @@ connectBtn.addEventListener('click', async () => {
             await controlCharacteristic.startNotifications();
             controlCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
         } catch (e) {
-            console.log("Уведомления не поддерживаются этой характеристикой, но запись доступна.");
+            console.log("Уведомления не поддерживаются, но запись доступна.");
         }
         
         statusDiv.innerText = "Статус: Подключено! ✅";
         statusDiv.style.color = "green";
+        
+        // Успешное соединение: кнопка становится бледно-зеленой
+        connectBtn.classList.remove('connecting');
+        connectBtn.style.backgroundColor = "#81C784"; // Бледно-зеленый
 
-        connectBtn.disabled = true;
         setButtonsEnabled(false);
 
         // Пинг для предотвращения разрыва соединения
@@ -76,15 +88,21 @@ connectBtn.addEventListener('click', async () => {
         console.error(error);
         statusDiv.innerText = "Ошибка: " + error.message;
         statusDiv.style.color = "red";
+        onDisconnected();
     }
 });
 
 function onDisconnected() {
     statusDiv.innerText = "Статус: Отключено ❌";
     statusDiv.style.color = "#555";
-    connectBtn.disabled = false;
+    
+    // При разрыве соединение: кнопка становится оранжевой
+    connectBtn.classList.remove('connecting');
+    connectBtn.style.backgroundColor = "#ff9800"; // Оранжевый
+
     setButtonsEnabled(true);
     if (keepAliveInterval) clearInterval(keepAliveInterval);
+    controlCharacteristic = null;
 }
 
 function setButtonsEnabled(disabledState) {
